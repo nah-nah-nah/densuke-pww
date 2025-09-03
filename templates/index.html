@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <title>伝助予定調整ツール</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM"
+      crossorigin="anonymous"
+    />
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdi9Fld05E/4UfX9xU2Y5T2D5"
+      crossorigin="anonymous"
+    ></script>
+  </head>
+<body>
+    <div class="fixed-top-container p-3 bg-light border-bottom">
+        <h1 class="h5 mb-2">伝助予定調整ツール</h1>
+        <form action="{{ url_for('upload_file') }}" method="post" enctype="multipart/form-data" class="d-flex align-items-center mb-3">
+            <div class="input-group">
+                <input type="file" name="csv_file" class="form-control" id="inputGroupFile04" aria-describedby="inputGroupFileAddon04" aria-label="Upload">
+                <button class="btn btn-outline-secondary" type="submit" id="inputGroupFileAddon04">アップロード</button>
+            </div>
+        </form>
+
+        <form action="{{ url_for('extract_data') }}" method="post">
+            <div class="mb-3">
+                <label class="form-label">抽出レベル:</label>
+                <div class="btn-group" role="group" aria-label="抽出レベルボタン">
+                    <input type="radio" class="btn-check" name="level_single" id="level_ok_all" value="◎" autocomplete="off" {% if current_level == '◎' %}checked{% endif %}>
+                    <label class="btn btn-outline-primary" for="level_ok_all">終日</label>
+
+                    <input type="radio" class="btn-check" name="level_single" id="level_circle_all" value="〇" autocomplete="off" {% if current_level == '〇' %}checked{% endif %}>
+                    <label class="btn btn-outline-primary" for="level_circle_all">夜</label>
+
+                    <input type="radio" class="btn-check" name="level_single" id="level_triangle_all" value="△" autocomplete="off" {% if current_level == '△' %}checked{% endif %}>
+                    <label class="btn btn-outline-primary" for="level_triangle_all">昼</label>
+
+                    <input type="radio" class="btn-check" name="level_single" id="level_circle_only" value="〇のみ" autocomplete="off" {% if current_level == '〇のみ' %}checked{% endif %}>
+                    <label class="btn btn-outline-primary" for="level_circle_only">夜のみ</label>
+
+                    <input type="radio" class="btn-check" name="level_single" id="level_triangle_only" value="△のみ" autocomplete="off" {% if current_level == '△のみ' %}checked{% endif %}>
+                    <label class="btn btn-outline-primary" for="level_triangle_only">昼のみ</label>
+
+                    <input type="radio" class="btn-check" name="level_single" id="level_all" value="全件" autocomplete="off" {% if current_level == '全件' %}checked{% endif %}>
+                    <label class="btn btn-outline-primary" for="level_all">全件</label>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">メンバー指定 (全員同じレベル):</label>
+                <div class="d-flex flex-wrap gap-2">
+                    {% for member in members %}
+                    <input type="checkbox" class="btn-check" id="member_toggle_{{ member }}" name="members" value="{{ member }}" autocomplete="off" {% if member in selected_members %}checked{% endif %}>
+                    <label class="btn btn-outline-secondary" for="member_toggle_{{ member }}">{{ member }}</label>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <button type="submit" class="btn btn-primary me-2">抽出</button>
+                <div class="btn-group" role="group">
+                    {% for month in months %}
+                    <a href="?month={{ month }}" class="btn {% if month == current_month %}btn-primary{% else %}btn-outline-primary{% endif %}">{{ month }}月</a>
+                    {% endfor %}
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="container my-5 pt-5">
+        <div class="mt-5 pt-5">
+            <div class="row">
+                <div class="col-md-6">
+                    <h3>参加可能人数一覧</h3>
+                    <div class="table-responsive">
+                        {{ attendees_table_html | safe }}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <h3>メンバー指定の抽出結果</h3>
+                    <div class="table-responsive">
+                        {% if result_table_html %}
+                        {{ result_table_html | safe }}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body></html>

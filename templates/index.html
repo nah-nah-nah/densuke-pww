@@ -8,18 +8,37 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.min.js" integrity="sha256-ew8UiV1pJH/YjpOEBInP1HxVvT/SfrCmwSoUzF9JIgc=" crossorigin="anonymous"></script>
 </head>
 <body>
-    <div class="fixed-top-container p-3 bg-light border-bottom">
-        <h1 class="h5 mb-2">伝助予定調整ツール</h1>
-        <form action="{{ url_for('upload_file') }}" method="post" enctype="multipart/form-data" class="d-flex align-items-center mb-3">
-            <div class="input-group">
-                <input type="file" name="csv_file" class="form-control" id="inputGroupFile04" aria-describedby="inputGroupFileAddon04" aria-label="Upload">
-                <button class="btn btn-outline-secondary" type="submit" id="inputGroupFileAddon04">アップロード</button>
+    <header class="fixed-top-container p-3 bg-light border-bottom">
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="row">
+            <div class="col-12">
+                {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endfor %}
             </div>
-        </form>
+        </div>
+        {% endif %}
+        {% endwith %}
+
+        <h1 class="h5 mb-2">伝助予定調整ツール</h1>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <form action="{{ url_for('upload_file') }}" method="post" enctype="multipart/form-data" class="d-flex align-items-center mb-0 me-2">
+                <div class="input-group">
+                    <input type="file" name="csv_file" class="form-control" id="inputGroupFile" aria-describedby="uploadButton" aria-label="Upload">
+                    <button class="btn btn-outline-secondary" type="submit" id="uploadButton">アップロード</button>
+                </div>
+            </form>
+            <button class="btn btn-outline-info flex-shrink-0" type="button" data-bs-toggle="modal" data-bs-target="#manualModal">マニュアル</button>
+        </div>
 
         <form action="{{ url_for('extract_data') }}" method="post">
             <div class="mb-3">
-                <label class="form-label">抽出レベル:</label>
+                <label class="form-label">抽出レベル</label>
                 <div class="btn-group" role="group" aria-label="抽出レベルボタン">
                     <input type="radio" class="btn-check" name="level_single" id="level_ok_all" value="◎" autocomplete="off" {% if current_level == '◎' %}checked{% endif %}>
                     <label class="btn btn-outline-primary" for="level_ok_all">終日</label>
@@ -41,10 +60,13 @@
                 </div>
             </div>
             <div class="mb-3">
-                <label class="form-label">メンバー指定 (全員同じレベル):</label>
+                <label class="form-label">
+                    メンバー指定
+                    <button type="button" class="btn btn-outline-secondary btn-sm ms-2" id="toggleAllMembers">全て選択</button>
+                </label>
                 <div class="d-flex flex-wrap gap-2">
                     {% for member in members %}
-                    <input type="checkbox" class="btn-check" id="member_toggle_{{ member }}" name="members" value="{{ member }}" autocomplete="off" {% if member in selected_members %}checked{% endif %}>
+                    <input type="checkbox" class="btn-check member-checkbox" id="member_toggle_{{ member }}" name="members" value="{{ member }}" autocomplete="off" {% if member in selected_members %}checked{% endif %}>
                     <label class="btn btn-outline-secondary" for="member_toggle_{{ member }}">{{ member }}</label>
                     {% endfor %}
                 </div>
@@ -58,9 +80,9 @@
                 </div>
             </div>
         </form>
-    </div>
+    </header>
 
-    <div class="container my-5 pt-5">
+    <main class="container my-5 pt-5">
         <div class="mt-5 pt-5">
             <div class="row">
                 <div class="col-md-6">
@@ -71,13 +93,157 @@
                 </div>
                 <div class="col-md-6">
                     <h3>メンバー指定の抽出結果</h3>
-                    <div class="table-responsive">
+                    <div class="table-responsive mb-3">
                         {% if result_table_html %}
                         {{ result_table_html | safe }}
                         {% endif %}
                     </div>
+                    {% if selected_members %}
+                    <div class="d-grid gap-2">
+                        {% for member in selected_members %}
+                        {% set member_metadata = metadata_dict.get(member, {}) %}
+                        {% if member_metadata.get('コメント') or member_metadata.get('最終更新日時') %}
+                        <div class="card">
+                            <div class="card-body py-2 px-3">
+                                <h6 class="card-title">{{ member }}</h6>
+                                {% if member_metadata.get('コメント') %}
+                                <p class="card-text mb-1"><small>{{ member_metadata['コメント'] }}</small></p>
+                                {% endif %}
+                                {% if member_metadata.get('最終更新日時') %}
+                                <p class="card-text text-muted mb-0"><small>最終更新日時: {{ member_metadata['最終更新日時'] }}</small></p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div class="modal fade" id="manualModal" tabindex="-1" aria-labelledby="manualModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="manualModalLabel">伝助予定調整ツール マニュアル</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4 bg-light">
+                    <section class="manual-section">
+                        <h4 class="manual-heading">はじめに</h4>
+                        <p class="lead fw-normal">このツールは、伝助で作成されたCSVファイルを利用して、みんなの予定から最適な日程を簡単に見つけることができるウェブアプリケーションです。パソコンやスマートフォンから、いつでも手軽にご利用いただけます。</p>
+                    </section>
+                    
+                    <section class="manual-section">
+                        <h4 class="manual-heading">ステップ 1：伝助CSVファイルの準備</h4>
+                        <p class="mb-3">ツールをご利用いただくには、まず「<strong>伝助</strong>」で作成した予定表のCSVファイルをご用意ください。</p>
+                        <h6 class="manual-subheading">ファイルの取得方法</h6>
+                        <ol class="list-group list-group-flush">
+                            <li class="list-group-item bg-light border-0 py-2">
+                                <span class="badge text-bg-secondary me-2">1</span> 「伝助」のページで、作成した予定表を開きます。
+                            </li>
+                            <li class="list-group-item bg-light border-0 py-2">
+                                <span class="badge text-bg-secondary me-2">2</span> 「CSVダウンロード」ボタンをクリックし、ファイルを保存してください。<br>
+                                <strong class="text-info">※文字コードはUTF-8を選択してください。</strong>
+                            </li>
+                        </ol>
+                    </section>
+                    
+                    <section class="manual-section">
+                        <h4 class="manual-heading">ステップ 2：ツールの利用</h4>
+                        <h6 class="manual-subheading">ファイルのアップロード</h6>
+                        <p class="mb-3">このツールにファイルをアップロードすることで、予定の調整を開始できます。</p>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item bg-light border-0 py-2">
+                                <span class="badge text-bg-secondary me-2">1</span> 「<strong>ファイルを選択</strong>」ボタンをクリックします。
+                            </li>
+                            <li class="list-group-item bg-light border-0 py-2">
+                                <span class="badge text-bg-secondary me-2">2</span> ステップ1でダウンロードした伝助のCSVファイルを選びます。
+                            </li>
+                            <li class="list-group-item bg-light border-0 py-2">
+                                <span class="badge text-bg-secondary me-2">3</span> 「<strong>アップロード</strong>」ボタンを押して、ファイルをツールに読み込みます。
+                            </li>
+                        </ul>
+                    </section>
+                    
+                    <section class="manual-section">
+                        <h4 class="manual-heading">ステップ 3：予定の絞り込みと抽出</h4>
+                        <p class="mb-3">アップロードが完了すると、様々な条件を使って予定を絞り込むことができます。</p>
+                        <h6 class="manual-subheading">時間帯の絞り込み（抽出レベル）</h6>
+                        <p>ご希望の時間帯に合わせたボタンを選択してください。</p>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item bg-light border-0 py-2"><strong>終日</strong>：◎と未入力の予定を抽出</li>
+                            <li class="list-group-item bg-light border-0 py-2"><strong>夜</strong>：◎、〇、そして未入力の予定を抽出</li>
+                            <li class="list-group-item bg-light border-0 py-2"><strong>昼</strong>：◎、△、そして未入力の予定を抽出</li>
+                            <li class="list-group-item bg-light border-0 py-2"><strong>夜のみ</strong>：〇と未入力の予定のみを抽出</li>
+                            <li class="list-group-item bg-light border-0 py-2"><strong>昼のみ</strong>：△と未入力の予定のみを抽出</li>
+                            <li class="list-group-item bg-light border-0 py-2"><strong>全件</strong>：すべての予定を表示</li>
+                        </ul>
+                        <h6 class="manual-subheading">メンバー指定</h6>
+                        <p>参加してほしいメンバーのボタンにチェックを入れることで、<strong class="text-success">選択したメンバー全員が参加できる日</strong>だけを抽出できます。</p>
+                    </section>
+                    
+                    <section class="manual-section">
+                        <h4 class="manual-heading">ステップ 4：結果の確認</h4>
+                        <p>すべての条件を設定し終えたら、「<strong>抽出</strong>」ボタンを押します。</p>
+                        <p>指定した条件に合う日程だけが表示され、どの時間が最も多くの人が集まれるか、一目で確認することができます。</p>
+                    </section>
+                    
+                    <section class="manual-section">
+                        <h4 class="manual-heading">便利な機能</h4>
+                        <h6 class="manual-subheading">月ごとの絞り込み</h6>
+                        <p>画面右上に表示される「○月」ボタンを押すと、表示される予定をその月に絞り込めます。</p>
+                    </section>
+
+                    <section class="manual-section">
+                        <h4 class="manual-heading">注意点</h4>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item bg-light border-0 py-2">
+                                <small class="text-muted"><strong>データ保持について</strong>: このツールは、一度アップロードしたCSVデータを保持します。新しい予定に更新したい場合は、最新の伝助のデータを再度アップロードしてください。</small>
+                            </li>
+                            <li class="list-group-item bg-light border-0 py-2">
+                                <small class="text-muted"><strong>動作環境</strong>: パソコン、スマートフォン、タブレットなど、ブラウザがあれば利用できます。</small>
+                            </li>
+                            <li class="list-group-item bg-light border-0 py-2">
+                                <small class="text-muted"><strong>無料プランの制限</strong>: このツールは無料のサーバーで動いています。しばらくアクセスがないと、休止状態になることがあります。次にアクセスした際、読み込みに時間がかかることがありますが、しばらく待てば起動します。</small>
+                            </li>
+                            <li class="list-group-item bg-light border-0 py-2">
+                                <small class="text-danger">不具合等あればtwitnahスレッドまで</small>
+                            </li>
+                        </ul>
+                    </section>
+                    <section class="manual-section">
+                        <h4 class="manual-heading">更新履歴</h4>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item bg-light border-0 py-2">
+                                <small class="text-muted">2025/09/04:<br>
+                                    マニュアルを追加<br>
+                                    メンバー指定にカタカナソートが漏れていた問題を修正<br>
+                                    メンバーをまとめてオン・オフできる切り替えボタンを追加<br>
+                                    メンバー指定の抽出結果にコメントと最終更新日時を追加<br>
+                                    ファイルアップロードエラー時ページ内で警告が出るように変更
+                                </small>
+                            </li>
+                        </ul>
+                    </section>
                 </div>
             </div>
         </div>
     </div>
-</body></html>
+    
+    <script>
+        document.getElementById('toggleAllMembers').addEventListener('click', function() {
+            const checkboxes = document.querySelectorAll('.member-checkbox');
+            const allChecked = Array.from(checkboxes).every(checkbox => checkbox.checked);
+            
+            checkboxes.forEach(function(checkbox) {
+                checkbox.checked = !allChecked;
+            });
+            
+            this.textContent = allChecked ? '全て選択' : '全て解除';
+        });
+    </script>
+</body>
+</html>

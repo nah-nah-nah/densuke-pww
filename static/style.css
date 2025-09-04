@@ -1,12 +1,9 @@
-body { font-family: sans-serif; }
-.data { border-collapse: collapse; width: 100%; }
-.data th, .data td { border: 1px solid #ddd; padding: 8px; }
-.data tr:nth-child(even) { background-color: #f2f2f2; }
-.result-section { margin-top: 40px; }
-.member-checkboxes { display: flex; flex-wrap: wrap; gap: 10px; }
-.meta-list { list-style-type: none; padding: 0; }
-.meta-list li { margin-bottom: 10px; padding: 10px; border: 1px solid #eee; border-radius: 5px; }
-.meta-list li p { margin: 0; }
+/* ====================
+   基本スタイル
+   ==================== */
+body {
+    font-family: sans-serif;
+}
 
 /* 固定ヘッダーの基本スタイル */
 .fixed-top-container {
@@ -18,38 +15,50 @@ body { font-family: sans-serif; }
     height: auto; /* 高さは自動調整 */
 }
 
+/* ====================
+   コンテンツのレイアウト
+   ==================== */
 /* メインコンテンツの余白 */
 body {
-    /* デフォルトのpadding-topを設定（PCなど大きな画面用） */
     padding-top: 200px;
 }
 
-/* 画面幅が992px以下の場合（タブレット用） */
-@media (max-width: 991.98px) {
-    body {
-        padding-top: 200px; /* 必要に応じて調整 */
-    }
+/* 抽出結果のセクション */
+.result-section {
+    margin-top: 40px;
 }
 
-/* 画面幅が768px以下の場合（スマートフォン用） */
-@media (max-width: 767.98px) {
-    body {
-        padding-top: 250px; /* 必要に応じて調整 */
-    }
-    .row {
-        flex-direction: column-reverse;
-    }
-
-    /* メンバー指定の抽出結果のコンテナに下マージンを追加 */
-    .row .col-md-6:nth-child(2) {
-        margin-bottom: 20px;
-    }
+/* ====================
+   フォーム関連
+   ==================== */
+/* メンバー選択のチェックボックス */
+.member-checkboxes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
 }
 
-/* テーブルのレイアウトを固定 */
-.table-responsive .data {
+/* ====================
+   テーブルスタイル
+   ==================== */
+/* テーブル共通のスタイル */
+.data {
     width: 100%;
+    border-collapse: collapse;
     table-layout: fixed;
+}
+
+/* テーブルのセルとボーダー */
+.data th,
+.data td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: center;
+}
+
+/* 日付の列のデータだけ左揃えにする */
+.data td:first-child {
+    text-align: left;
 }
 
 /* 日付の列の幅を固定 */
@@ -58,13 +67,70 @@ body {
     white-space: nowrap; /* テキストの折り返しを防ぐ */
 }
 
-/* 列名（ヘッダー）と表のセルを中央揃えにする */
-.data th,
-.data td {
-    text-align: center;
+/* 偶数行の背景色 */
+.data tr:nth-child(even) {
+    background-color: #f2f2f2;
 }
 
-/* 日付の列のデータだけ左揃えにする */
-.data td:first-child {
-    text-align: left;
+/* ====================
+   メタデータリスト
+   ==================== */
+.meta-list {
+    list-style-type: none;
+    padding: 0;
+}
+
+.meta-list li {
+    margin-bottom: 10px;
+    padding: 10px;
+    border: 1px solid #eee;
+    border-radius: 5px;
+}
+
+.meta-list li p {
+    margin: 0;
+}
+
+/* ====================
+   マニュアルスタイル
+   ==================== */
+.manual-section {
+    margin-bottom: 2rem;
+}
+
+.manual-heading {
+    border-bottom: 1px solid #dee2e6; /* Bootstrapのボーダー色に合わせる */
+    padding-bottom: .5rem;
+}
+
+/* manual-subheading の修正 */
+.manual-subheading {
+    margin-top: 1.5rem; /* 上の要素からのマージンを追加 */
+}
+
+
+/* ====================
+   レスポンシブデザイン
+   ==================== */
+/* 画面幅が992px以下の場合（タブレット用） */
+@media (max-width: 991.98px) {
+    body {
+        padding-top: 200px;
+    }
+}
+
+/* 画面幅が768px以下の場合（スマートフォン用） */
+@media (max-width: 767.98px) {
+    body {
+        padding-top: 250px;
+    }
+
+    .row {
+        flex-direction: column-reverse;
+    }
+
+    /* メンバー指定の抽出結果のコンテナに下マージンを追加 */
+    .row .col-md-6:nth-child(2) {
+        margin-bottom: 20px;
+    }
 }
